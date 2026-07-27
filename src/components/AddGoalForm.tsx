@@ -35,18 +35,13 @@ export function AddGoalForm({ onAddGoal, onUpdateGoal, currency, initialData, on
     if (!title.trim()) return;
     setIsReframing(true);
     try {
-      const res = await fetch('/api/reframe-goal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: title })
-      });
-      const data = await res.json();
-      if (data.reframedText) {
-        setTitle(data.reframedText);
-      }
+      // Client-side mock for reframing
+      setTimeout(() => {
+        setTitle(`I easily and joyfully manifest ${title.toLowerCase()}`);
+        setIsReframing(false);
+      }, 600);
     } catch (e) {
       console.error(e);
-    } finally {
       setIsReframing(false);
     }
   };
