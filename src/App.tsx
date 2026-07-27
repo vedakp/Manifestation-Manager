@@ -388,7 +388,17 @@ export default function App() {
           )}
 
           {activeTab === 'settings' && (
-            <SettingsComponent settings={settings} onUpdateSettings={setSettings} />
+            <SettingsComponent 
+              settings={settings} 
+              onUpdateSettings={setSettings} 
+              goals={goals}
+              moneyWins={moneyWins}
+              onImportData={(importedGoals, importedWins) => {
+                setGoals(importedGoals);
+                setMoneyWins(importedWins);
+                setActiveTab('list');
+              }}
+            />
           )}
 
         </div>

@@ -1,19 +1,83 @@
-import React from 'react';
-import { AppSettings } from '../types';
-import { Volume2, VolumeX, DollarSign, Settings as SettingsIcon } from 'lucide-react';
+import React, { useRef } from 'react';
+import { AppSettings, Goal, MoneyWin } from '../types';
+import { Volume2, VolumeX, DollarSign, Settings as SettingsIcon, Download, Upload, Save, CheckCircle2 } from 'lucide-react';
 
 interface SettingsProps {
   settings: AppSettings;
   onUpdateSettings: (settings: AppSettings) => void;
+  goals: Goal[];
+  moneyWins: MoneyWin[];
+  onImportData: (goals: Goal[], moneyWins: MoneyWin[]) => void;
 }
 
-export function Settings({ settings, onUpdateSettings }: SettingsProps) {
+export function Settings({ settings, onUpdateSettings, goals, moneyWins, onImportData }: SettingsProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showSavedMsg, setShowSavedMsg] = React.useState(false);
+
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onUpdateSettings({ ...settings, currency: e.target.value });
   };
 
   const toggleSound = () => {
     onUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled });
+  };
+
+  const handleExportData = () => {
+    const data = {
+      goals,
+      moneyWins,
+      settings,
+      exportDate: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `manifest-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        
+        if (parsed.goals && Array.isArray(parsed.goals)) {
+          onImportData(parsed.goals, parsed.moneyWins || []);
+          if (parsed.settings) {
+            onUpdateSettings(parsed.settings);
+          }
+        } else {
+          alert('Invalid backup file format.');
+        }
+      } catch (err) {
+        alert('Error reading backup file.');
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleManualSave = () => {
+    localStorage.setItem('manifest-goals', JSON.stringify(goals));
+    localStorage.setItem('manifest-money-wins', JSON.stringify(moneyWins));
+    localStorage.setItem('manifest-settings', JSON.stringify(settings));
+    setShowSavedMsg(true);
+    setTimeout(() => setShowSavedMsg(false), 2000);
   };
 
   return (
@@ -63,6 +127,50 @@ export function Settings({ settings, onUpdateSettings }: SettingsProps) {
                 {settings.soundEnabled ? 'ON' : 'OFF'}
               </span>
             </button>
+          </div>
+          
+          {/* Data Management */}
+          <div className="pt-4 border-t border-gray-100">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 block">Data Management</label>
+            
+            <div className="space-y-3">
+              <button
+                onClick={handleManualSave}
+                className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                {showSavedMsg ? (
+                  <><CheckCircle2 size={16} className="text-green-500" /> Saved to Local Storage</>
+                ) : (
+                  <><Save size={16} className="text-gray-400" /> Force Save to Local Storage</>
+                )}
+              </button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={handleExportData}
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  <Download size={16} className="text-gray-400" /> Backup Data
+                </button>
+                
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  <Upload size={16} className="text-gray-400" /> Restore Data
+                </button>
+                <input
+                  type="file"
+                  accept=".json"
+                  className="hidden"
+                  ref={fileInputRef}
+                  onChange={handleImportData}
+                />
+              </div>
+              <p className="text-[10px] text-gray-400 text-center mt-2 px-4">
+                Backup your manifestation list to a JSON file on your device.
+              </p>
+            </div>
           </div>
         </div>
       </div>
