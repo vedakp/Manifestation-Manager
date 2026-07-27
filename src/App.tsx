@@ -102,17 +102,16 @@ export default function App() {
            }
         }
         
-        const res = await fetch('/api/generate-affirmation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ goals })
-        });
-        const data = await res.json();
-        if (data.affirmation) {
-          setDailyAffirmation(data.affirmation);
-        }
+        const fallbackAffirmations = [
+          "I am an open channel for infinite abundance.",
+          "Every day, in every way, I am getting better and better.",
+          "I attract miracles naturally.",
+          "The universe is conspiring in my favor.",
+          "I am worthy of all my dreams coming true."
+        ];
+        setDailyAffirmation(fallbackAffirmations[Math.floor(Math.random() * fallbackAffirmations.length)]);
       } catch (e) {
-        console.error("Using fallback affirmation", e);
+        console.error("Error setting affirmation", e);
       }
     };
     fetchAffirmation();
