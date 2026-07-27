@@ -45,15 +45,11 @@ jobs:
       - name: Verify dist folder
         run: ls -la dist
 
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload dist
+        uses: actions/upload-artifact@v3
         with:
           name: react-dist
           path: dist
-          
-      - name: Upload dist
-        uses: actions/upload-pages-artifact@v3
-
   # Deployment job
   deploy:
     environment:
